@@ -35,7 +35,9 @@ openai._base_client.SyncHttpxClientWrapper = CustomHttpxClientWrapper
 
 # Load API key from environment variable or use the hardcoded one
 api_key = os.environ.get(
-    "OPENAI_API_KEY",)
+    "OPENAI_API_KEY",
+    "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",
+)
 
 
 class ResumeLink(BaseModel):
