@@ -136,4 +136,4 @@ dist
 .pnp.*
 
 *.pdf
-./server/_pycache_
+/server/__pycache__
