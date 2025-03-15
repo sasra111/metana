@@ -130,85 +130,6 @@ app.add_middleware(
 async def health_check():
     return {"status": "OK"}
 
-
-# Add this function to send webhook notifications
-async def send_webhook(data, candidate_email, environment="testing"):
-    """
-    Send processed CV data to webhook endpoint with the required structure
-
-    Args:
-        data: The processed CV data
-        candidate_email: Email of the candidate
-        environment: Either "testing" or "prod"
-    """
-    webhook_url = "https://rnd-assignment.automations-3d6.workers.dev/"
-
-    try:
-        logger.info(f"Sending webhook notification for {candidate_email}")
-
-        headers = {
-            "Content-Type": "application/json",
-            "X-Candidate-Email": candidate_email,
-        }
-
-        # Parse the data if it's a string
-        parsed_json = {}
-        if isinstance(data, str):
-            try:
-                parsed_json = json.loads(data)
-            except json.JSONDecodeError:
-                parsed_json = {"raw_text": data}
-        else:
-            parsed_json = data
-
-        # Extract candidate name if available
-        candidate_name = parsed_json.get("fullName", "Unknown Candidate")
-
-        # Format the data according to the expected payload structure
-        payload = {
-            "cv_data": {
-                "personal_info": {
-                    "name": parsed_json.get("fullName", ""),
-                    "email": parsed_json.get("email", candidate_email),
-                    "github": parsed_json.get("github", ""),
-                    "linkedin": parsed_json.get("linkedin", ""),
-                },
-                "education": parsed_json.get("education", []),
-                "qualifications": parsed_json.get("technicalSkills", []),
-                "projects": [],  # Not directly provided in the parsed data
-                "cv_public_link": resume_link.url if "resume_link" in globals() else "",
-            },
-            "metadata": {
-                "applicant_name": candidate_name,
-                "email": candidate_email,
-                "status": environment,
-                "cv_processed": True,
-                "processed_timestamp": datetime.datetime.now().isoformat(),
-            },
-        }
-
-        # For employment history, try to format it if available
-        if "employment" in parsed_json:
-            # Add employment details to qualifications or relevant section
-            payload["cv_data"]["work_experience"] = parsed_json["employment"]
-
-        # Send the webhook request
-        webhook_response = requests.post(
-            webhook_url, headers=headers, json=payload, timeout=10
-        )
-
-        webhook_response.raise_for_status()
-        logger.info(
-            f"Webhook notification sent successfully: {webhook_response.status_code}"
-        )
-        return {"status": "success", "response": webhook_response.text}
-
-    except Exception as e:
-        logger.error(f"Error sending webhook notification: {e}")
-        return {"status": "error", "error": str(e)}
-
-
-# Update the parse-resume endpoint to include webhook notification
 @app.post("/parse-resume/")
 async def parse_resume(resume_link: ResumeLink):
     try:
@@ -261,5 +182,4 @@ async def parse_resume(resume_link: ResumeLink):
 
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
