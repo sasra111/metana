@@ -12,6 +12,7 @@ from openai import OpenAI
 from openai._base_client import SyncHttpxClientWrapper
 import json
 import datetime
+from dotenv import load_dotenv
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -33,12 +34,8 @@ class CustomHttpxClientWrapper(SyncHttpxClientWrapper):
 
 openai._base_client.SyncHttpxClientWrapper = CustomHttpxClientWrapper
 
-# Load API key from environment variable or use the hardcoded one
-api_key = os.environ.get(
-    "OPENAI_API_KEY",
-    "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",
-)
-
+load_dotenv()  # Loads variables from .env into environment
+api_key = os.getenv('OPENAI_API_KEY')
 
 class ResumeLink(BaseModel):
     url: str
